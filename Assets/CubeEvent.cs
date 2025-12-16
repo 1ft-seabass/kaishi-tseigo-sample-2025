@@ -9,21 +9,21 @@ using System.Text;
 
 public class CubeEvent : MonoBehaviour, IPointerClickHandler
 {
-    // ƒ}ƒCƒN‚ÌŠJnEI—¹ŠÇ—
+    // ãƒã‚¤ã‚¯ã®é–‹å§‹ãƒ»çµ‚äº†ç®¡ç†
     bool flagMicRecordStart = false;
 
-    // ƒ}ƒCƒNƒfƒoƒCƒX‚ªƒLƒƒƒbƒ`‚Å‚«‚½‚©‚Ç‚¤‚©
+    // ãƒã‚¤ã‚¯ãƒ‡ãƒã‚¤ã‚¹ãŒã‚­ãƒ£ãƒƒãƒã§ããŸã‹ã©ã†ã‹
     bool catchedMicDevice = false;
 
-    // Œ»İ˜^‰¹‚·‚éƒ}ƒCƒNƒfƒoƒCƒX–¼
+    // ç¾åœ¨éŒ²éŸ³ã™ã‚‹ãƒã‚¤ã‚¯ãƒ‡ãƒã‚¤ã‚¹å
     string currentRecordingMicDeviceName = "null";
 
-    // PC ‚Ì˜^‰¹‚Ìƒ^[ƒQƒbƒg‚É‚È‚éƒ}ƒCƒNƒfƒoƒCƒX–¼
-    // ‚±‚ê‚Í‚¨g‚¢‚ÌƒfƒoƒCƒX‚Å•Ï‚í‚è‚Ü‚·
-    // Š®‘Sˆê’v‚Å‚È‚¢‚Æó‚¯æ‚ê‚È‚¢‚Ì‚Å’ˆÓ
+    // PC ã®éŒ²éŸ³ã®ã‚¿ãƒ¼ã‚²ãƒƒãƒˆã«ãªã‚‹ãƒã‚¤ã‚¯ãƒ‡ãƒã‚¤ã‚¹å
+    // ã“ã‚Œã¯ãŠä½¿ã„ã®ãƒ‡ãƒã‚¤ã‚¹ã§å¤‰ã‚ã‚Šã¾ã™
+    // å®Œå…¨ä¸€è‡´ã§ãªã„ã¨å—ã‘å–ã‚Œãªã„ã®ã§æ³¨æ„
     string recordingTargetMicDeviceName = "Krisp Microphone (Krisp Audio)";
 
-    // ƒwƒbƒ_[ƒTƒCƒY
+    // ãƒ˜ãƒƒãƒ€ãƒ¼ã‚µã‚¤ã‚º
     int HeaderByteSize = 44;
 
     // BitsPerSample
@@ -32,36 +32,36 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
     // AudioFormat
     int AudioFormat = 1;
 
-    // ˜^‰¹‚·‚é AudioClip
+    // éŒ²éŸ³ã™ã‚‹ AudioClip
     AudioClip recordedAudioClip;
 
-    // ƒTƒ“ƒvƒŠƒ“ƒOü”g”
+    // ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°å‘¨æ³¢æ•°
     int samplingFrequency = 44100;
 
-    // Å‘å˜^‰¹ŠÔ[sec]
+    // æœ€å¤§éŒ²éŸ³æ™‚é–“[sec]
     int maxTimeSeconds = 10;
 
-    // Wav ƒf[ƒ^
+    // Wav ãƒ‡ãƒ¼ã‚¿
     byte[] dataWav;
 
     // OpenAIAPIKey
-    // WhisperAPI ‚Æ ChatGPTAPI ‚Å‹¤’Ê
+    // WhisperAPI ã¨ ChatGPTAPI ã§å…±é€š
     string OpenAIAPIKey = "OpenAIAPIKey";
 
-    // Wisper API ‚ÅóM‚µ‚½ JSON ƒf[ƒ^‚ğ Unity ‚Åˆµ‚¤ƒf[ƒ^‚É‚·‚é WhisperAPIResponseData ƒx[ƒXƒNƒ‰ƒX
+    // Wisper API ã§å—ä¿¡ã—ãŸ JSON ãƒ‡ãƒ¼ã‚¿ã‚’ Unity ã§æ‰±ã†ãƒ‡ãƒ¼ã‚¿ã«ã™ã‚‹ WhisperAPIResponseData ãƒ™ãƒ¼ã‚¹ã‚¯ãƒ©ã‚¹
     [Serializable]
     public class WhisperAPIResponseData
     {
         public string text;
     }
 
-    // ChatGPT API ‚ÅóM‚µ‚½ JSON ƒf[ƒ^‚ğ Unity ‚Åˆµ‚¤ƒf[ƒ^‚É‚·‚é ResponseData ƒx[ƒXƒNƒ‰ƒX
-    // APId—l : https://platform.openai.com/docs/api-reference/completions/object
+    // ChatGPT API ã§å—ä¿¡ã—ãŸ JSON ãƒ‡ãƒ¼ã‚¿ã‚’ Unity ã§æ‰±ã†ãƒ‡ãƒ¼ã‚¿ã«ã™ã‚‹ ResponseData ãƒ™ãƒ¼ã‚¹ã‚¯ãƒ©ã‚¹
+    // APIä»•æ§˜ : https://platform.openai.com/docs/api-reference/completions/object
     [Serializable]
     public class ResponseData
     {
         public string id;
-        public string @object; // object ‚Í—\–ñŒê‚È‚Ì‚Å @ ‚ğg‚Á‚ÄƒGƒXƒP[ƒv‚µ‚Ä‚¢‚Ü‚·
+        public string @object; // object ã¯äºˆç´„èªãªã®ã§ @ ã‚’ä½¿ã£ã¦ã‚¨ã‚¹ã‚±ãƒ¼ãƒ—ã—ã¦ã„ã¾ã™
         public int created;
         public List<ResponseDataChoice> choices;
         public ResponseDataUsage usage;
@@ -82,7 +82,7 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
         public string finish_reason;
     }
 
-    // ChatGPT API ‚É‘—M‚·‚é Unity ƒf[ƒ^‚ğ JSON ƒf[ƒ^‰»‚·‚é RequestData ƒx[ƒXƒNƒ‰ƒX
+    // ChatGPT API ã«é€ä¿¡ã™ã‚‹ Unity ãƒ‡ãƒ¼ã‚¿ã‚’ JSON ãƒ‡ãƒ¼ã‚¿åŒ–ã™ã‚‹ RequestData ãƒ™ãƒ¼ã‚¹ã‚¯ãƒ©ã‚¹
     [Serializable]
     public class RequestData
     {
@@ -108,12 +108,12 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
     void Launch()
     {
 
-        // ƒ}ƒCƒNƒfƒoƒCƒX‚ğ’T‚·
+        // ãƒã‚¤ã‚¯ãƒ‡ãƒã‚¤ã‚¹ã‚’æ¢ã™
         foreach (string device in Microphone.devices)
         {
             Debug.Log($"Mic device name : {device}");
 
-            // PC —p‚Ìƒ}ƒCƒNƒfƒoƒCƒX‚ğŠ„‚è“–‚Ä
+            // PC ç”¨ã®ãƒã‚¤ã‚¯ãƒ‡ãƒã‚¤ã‚¹ã‚’å‰²ã‚Šå½“ã¦
             if (device == recordingTargetMicDeviceName)
             {
                 Debug.Log($"{recordingTargetMicDeviceName} searched");
@@ -127,12 +127,12 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
 
         if (catchedMicDevice)
         {
-            Debug.Log($"ƒ}ƒCƒN‘{õ¬Œ÷");
+            Debug.Log($"ãƒã‚¤ã‚¯æœç´¢æˆåŠŸ");
             Debug.Log($"currentRecordingMicDeviceName : {currentRecordingMicDeviceName}");
         }
         else
         {
-            Debug.Log($"ƒ}ƒCƒN‘{õ¸”s");
+            Debug.Log($"ãƒã‚¤ã‚¯æœç´¢å¤±æ•—");
         }
 
     }
@@ -148,7 +148,7 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
             if (flagMicRecordStart)
             {
                 // Stop
-                // ƒ}ƒCƒN‚Ì˜^‰¹‚ğŠJn
+                // ãƒã‚¤ã‚¯ã®éŒ²éŸ³ã‚’é–‹å§‹
                 flagMicRecordStart = false;
                 Debug.Log($"Mic Record Stop");
 
@@ -158,7 +158,7 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
             else
             {
                 // Start
-                // ƒ}ƒCƒN‚Ì’â~
+                // ãƒã‚¤ã‚¯ã®åœæ­¢
                 flagMicRecordStart = true;
                 Debug.Log($"Mic Record Start");
 
@@ -170,18 +170,18 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
 
     void RecordStart()
     {
-        // ƒ}ƒCƒN‚Ì˜^‰¹‚ğŠJn‚µ‚Ä AudioClip ‚ğŠ„‚è“–‚Ä
+        // ãƒã‚¤ã‚¯ã®éŒ²éŸ³ã‚’é–‹å§‹ã—ã¦ AudioClip ã‚’å‰²ã‚Šå½“ã¦
         recordedAudioClip = Microphone.Start(currentRecordingMicDeviceName, false, maxTimeSeconds, samplingFrequency);
     }
 
     void RecordStop()
     {
-        // ƒ}ƒCƒN‚Ì’â~
+        // ãƒã‚¤ã‚¯ã®åœæ­¢
         Microphone.End(currentRecordingMicDeviceName);
 
-        Debug.Log($"WAV ƒf[ƒ^ì¬ŠJn");
+        Debug.Log($"WAV ãƒ‡ãƒ¼ã‚¿ä½œæˆé–‹å§‹");
 
-        // using ‚ğg‚Á‚Äƒƒ‚ƒŠŠJ•ú‚ğ©“®‚Ås‚¤
+        // using ã‚’ä½¿ã£ã¦ãƒ¡ãƒ¢ãƒªé–‹æ”¾ã‚’è‡ªå‹•ã§è¡Œã†
         using (MemoryStream currentMemoryStream = new MemoryStream())
         {
             // ChunkID RIFF
@@ -246,58 +246,58 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
                 currentMemoryStream.Write(bufData, 0, bufData.Length);
             }
 
-            Debug.Log($"WAV ƒf[ƒ^ì¬Š®—¹");
+            Debug.Log($"WAV ãƒ‡ãƒ¼ã‚¿ä½œæˆå®Œäº†");
 
             dataWav = currentMemoryStream.ToArray();
 
             Debug.Log($"dataWav.Length {dataWav.Length}");
 
-            // ‚Ü‚¸ Wisper API ‚Å•¶š‹N‚±‚µ
+            // ã¾ãš Wisper API ã§æ–‡å­—èµ·ã“ã—
             StartCoroutine(PostWhisperAPI());
 
         }
 
     }
 
-    // Wisper API ‚Å•¶š‹N‚±‚µ
+    // Wisper API ã§æ–‡å­—èµ·ã“ã—
     IEnumerator PostWhisperAPI()
     {
-        // IMultipartFormSection ‚Å multipart/form-data ‚Ìƒf[ƒ^‚Æ‚µ‚Ä‘—‚ê‚Ü‚·
+        // IMultipartFormSection ã§ multipart/form-data ã®ãƒ‡ãƒ¼ã‚¿ã¨ã—ã¦é€ã‚Œã¾ã™
         // https://docs.unity3d.com/ja/2018.4/Manual/UnityWebRequest-SendingForm.html
         // https://docs.unity3d.com/ja/2019.4/ScriptReference/Networking.IMultipartFormSection.html
         // https://docs.unity3d.com/ja/2020.3/ScriptReference/Networking.MultipartFormDataSection.html
         List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
 
         // https://platform.openai.com/docs/api-reference/audio/createTranscription
-        // Whisper ƒ‚ƒfƒ‹‚ğg‚¤
+        // Whisper ãƒ¢ãƒ‡ãƒ«ã‚’ä½¿ã†
         formData.Add(new MultipartFormDataSection("model", "whisper-1"));
-        // “ú–{Œê‚Å•Ô“š
+        // æ—¥æœ¬èªã§è¿”ç­”
         formData.Add(new MultipartFormDataSection("language", "ja"));
-        // WAV ƒf[ƒ^‚ğ“ü‚ê‚é
+        // WAV ãƒ‡ãƒ¼ã‚¿ã‚’å…¥ã‚Œã‚‹
         formData.Add(new MultipartFormFileSection("file", dataWav, "whisper01.wav", "multipart/form-data"));
 
-        // HTTP ƒŠƒNƒGƒXƒg‚·‚é(POST ƒƒ\ƒbƒh) UnityWebRequest ‚ğŒÄ‚Ño‚µ
-        // ‘æ 2 ˆø”‚Åã‹L‚ÌƒtƒH[ƒ€ƒf[ƒ^‚ğŠ„‚è“–‚Ä‚Ä multipart/form-data ‚Ìƒf[ƒ^‚Æ‚µ‚Ä‘—‚è‚Ü‚·
+        // HTTP ãƒªã‚¯ã‚¨ã‚¹ãƒˆã™ã‚‹(POST ãƒ¡ã‚½ãƒƒãƒ‰) UnityWebRequest ã‚’å‘¼ã³å‡ºã—
+        // ç¬¬ 2 å¼•æ•°ã§ä¸Šè¨˜ã®ãƒ•ã‚©ãƒ¼ãƒ ãƒ‡ãƒ¼ã‚¿ã‚’å‰²ã‚Šå½“ã¦ã¦ multipart/form-data ã®ãƒ‡ãƒ¼ã‚¿ã¨ã—ã¦é€ã‚Šã¾ã™
         string urlWhisperAPI = "https://api.openai.com/v1/audio/transcriptions";
         UnityWebRequest request = UnityWebRequest.Post(urlWhisperAPI, formData);
 
-        // OpenAI ”FØ‚Í Authorization ƒwƒbƒ_[‚Å Bearer ‚Ì‚ ‚Æ‚É API ƒg[ƒNƒ“‚ğ“ü‚ê‚é
+        // OpenAI èªè¨¼ã¯ Authorization ãƒ˜ãƒƒãƒ€ãƒ¼ã§ Bearer ã®ã‚ã¨ã« API ãƒˆãƒ¼ã‚¯ãƒ³ã‚’å…¥ã‚Œã‚‹
         request.SetRequestHeader("Authorization", $"Bearer {OpenAIAPIKey}");
 
-        // ƒ_ƒEƒ“ƒ[ƒhiƒT[ƒo¨Unityj‚Ìƒnƒ“ƒhƒ‰‚ğì¬
+        // ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ï¼ˆã‚µãƒ¼ãƒâ†’Unityï¼‰ã®ãƒãƒ³ãƒ‰ãƒ©ã‚’ä½œæˆ
         request.downloadHandler = new DownloadHandlerBuffer();
 
-        Debug.Log("WhisperAPI ƒŠƒNƒGƒXƒgŠJn");
+        Debug.Log("WhisperAPI ãƒªã‚¯ã‚¨ã‚¹ãƒˆé–‹å§‹");
 
-        // ƒŠƒNƒGƒXƒgŠJn
+        // ãƒªã‚¯ã‚¨ã‚¹ãƒˆé–‹å§‹
         yield return request.SendWebRequest();
 
 
-        // Œ‹‰Ê‚É‚æ‚Á‚Ä•ªŠò
+        // çµæœã«ã‚ˆã£ã¦åˆ†å²
         switch (request.result)
         {
             case UnityWebRequest.Result.InProgress:
-                Debug.Log("WhisperAPI ƒŠƒNƒGƒXƒg’†");
+                Debug.Log("WhisperAPI ãƒªã‚¯ã‚¨ã‚¹ãƒˆä¸­");
                 break;
 
             case UnityWebRequest.Result.ProtocolError:
@@ -311,14 +311,14 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
                 break;
 
             case UnityWebRequest.Result.Success:
-                Debug.Log("WhisperAPI ƒŠƒNƒGƒXƒg¬Œ÷");
+                Debug.Log("WhisperAPI ãƒªã‚¯ã‚¨ã‚¹ãƒˆæˆåŠŸ");
 
-                // ƒRƒ“ƒ\[ƒ‹‚É•\¦
+                // ã‚³ãƒ³ã‚½ãƒ¼ãƒ«ã«è¡¨ç¤º
                 Debug.Log($"responseData: {request.downloadHandler.text}");
 
                 WhisperAPIResponseData resultResponseWhisperAPI = JsonUtility.FromJson<WhisperAPIResponseData>(request.downloadHandler.text);
 
-                // ƒeƒLƒXƒg‚ª‹N‚±‚¹‚½‚ç ChatGPT API ‚É•·‚­
+                // ãƒ†ã‚­ã‚¹ãƒˆãŒèµ·ã“ã›ãŸã‚‰ ChatGPT API ã«èã
                 StartCoroutine(PostChatGPT(resultResponseWhisperAPI.text));
 
                 break;
@@ -330,51 +330,51 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
     // ChatGPT API
     IEnumerator PostChatGPT(string text)
     {
-        // HTTP ƒŠƒNƒGƒXƒg‚·‚é(POST ƒƒ\ƒbƒh) UnityWebRequest ‚ğŒÄ‚Ño‚µ
-        // ƒŠƒNƒGƒXƒgd—l : https://platform.openai.com/docs/guides/gpt/chat-completions-api
-        // APId—l : https://platform.openai.com/docs/api-reference/completions/object
+        // HTTP ãƒªã‚¯ã‚¨ã‚¹ãƒˆã™ã‚‹(POST ãƒ¡ã‚½ãƒƒãƒ‰) UnityWebRequest ã‚’å‘¼ã³å‡ºã—
+        // ãƒªã‚¯ã‚¨ã‚¹ãƒˆä»•æ§˜ : https://platform.openai.com/docs/guides/gpt/chat-completions-api
+        // APIä»•æ§˜ : https://platform.openai.com/docs/api-reference/completions/object
         UnityWebRequest request = new UnityWebRequest("https://api.openai.com/v1/chat/completions", "POST");
 
         RequestData requestData = new RequestData();
-        // ƒf[ƒ^‚ğİ’è
+        // ãƒ‡ãƒ¼ã‚¿ã‚’è¨­å®š
         requestData.model = "gpt-4o-mini";
         RequestDataMessages currentMessage = new RequestDataMessages();
-        // ƒ[ƒ‹‚Í user
+        // ãƒ­ãƒ¼ãƒ«ã¯ user
         currentMessage.role = "user";
-        // ÀÛ‚Ì¿–â
+        // å®Ÿéš›ã®è³ªå•
         currentMessage.content = text;
         List<RequestDataMessages> currentMessages = new List<RequestDataMessages>();
         currentMessages.Add(currentMessage);
         requestData.messages = currentMessages;
         Debug.Log($"currentMessages[0].content : {currentMessages[0].content}");
 
-        // ‘—Mƒf[ƒ^‚ğ JsonUtility.ToJson ‚Å JSON •¶š—ñ‚ğì¬
-        // RequestData, RequestDataMessages ‚Ì\‘¢‚ÉŠî‚Ã‚¢‚Ä•ÏŠ·‚µ‚Ä‚­‚ê‚é
+        // é€ä¿¡ãƒ‡ãƒ¼ã‚¿ã‚’ JsonUtility.ToJson ã§ JSON æ–‡å­—åˆ—ã‚’ä½œæˆ
+        // RequestData, RequestDataMessages ã®æ§‹é€ ã«åŸºã¥ã„ã¦å¤‰æ›ã—ã¦ãã‚Œã‚‹
         string strJSON = JsonUtility.ToJson(requestData);
         Debug.Log($"strJSON : {strJSON}");
-        // ‘—Mƒf[ƒ^‚ğ Encoding.UTF8.GetBytes ‚Å byte ƒf[ƒ^‰»
+        // é€ä¿¡ãƒ‡ãƒ¼ã‚¿ã‚’ Encoding.UTF8.GetBytes ã§ byte ãƒ‡ãƒ¼ã‚¿åŒ–
         byte[] bodyRaw = Encoding.UTF8.GetBytes(strJSON);
 
-        // ƒAƒbƒvƒ[ƒhiUnity¨ƒT[ƒoj‚Ìƒnƒ“ƒhƒ‰‚ğì¬
+        // ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ï¼ˆUnityâ†’ã‚µãƒ¼ãƒï¼‰ã®ãƒãƒ³ãƒ‰ãƒ©ã‚’ä½œæˆ
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        // ƒ_ƒEƒ“ƒ[ƒhiƒT[ƒo¨Unityj‚Ìƒnƒ“ƒhƒ‰‚ğì¬
+        // ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ï¼ˆã‚µãƒ¼ãƒâ†’Unityï¼‰ã®ãƒãƒ³ãƒ‰ãƒ©ã‚’ä½œæˆ
         request.downloadHandler = new DownloadHandlerBuffer();
 
-        // JSON ‚Å‘—‚é‚Æ HTTP ƒwƒbƒ_[‚ÅéŒ¾‚·‚é
+        // JSON ã§é€ã‚‹ã¨ HTTP ãƒ˜ãƒƒãƒ€ãƒ¼ã§å®£è¨€ã™ã‚‹
         request.SetRequestHeader("Content-Type", "application/json");
-        // ChatGPT —p‚Ì”FØ‚ğ“`‚¦‚éİ’è
+        // ChatGPT ç”¨ã®èªè¨¼ã‚’ä¼ãˆã‚‹è¨­å®š
         request.SetRequestHeader("Authorization", $"Bearer {OpenAIAPIKey}");
 
-        // ƒŠƒNƒGƒXƒgŠJn
+        // ãƒªã‚¯ã‚¨ã‚¹ãƒˆé–‹å§‹
         yield return request.SendWebRequest();
 
-        Debug.Log("ChatGPT ƒŠƒNƒGƒXƒg...");
+        Debug.Log("ChatGPT ãƒªã‚¯ã‚¨ã‚¹ãƒˆ...");
 
-        // Œ‹‰Ê‚É‚æ‚Á‚Ä•ªŠò
+        // çµæœã«ã‚ˆã£ã¦åˆ†å²
         switch (request.result)
         {
             case UnityWebRequest.Result.InProgress:
-                Debug.Log("ChatGPT ƒŠƒNƒGƒXƒg’†");
+                Debug.Log("ChatGPT ãƒªã‚¯ã‚¨ã‚¹ãƒˆä¸­");
                 break;
 
             case UnityWebRequest.Result.ProtocolError:
@@ -388,14 +388,14 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
                 break;
 
             case UnityWebRequest.Result.Success:
-                Debug.Log("ChatGPT ƒŠƒNƒGƒXƒg¬Œ÷");
+                Debug.Log("ChatGPT ãƒªã‚¯ã‚¨ã‚¹ãƒˆæˆåŠŸ");
 
-                // ƒRƒ“ƒ\[ƒ‹‚É•\¦
+                // ã‚³ãƒ³ã‚½ãƒ¼ãƒ«ã«è¡¨ç¤º
                 Debug.Log($"responseData: {request.downloadHandler.text}");
 
                 ResponseData resultResponse = JsonUtility.FromJson<ResponseData>(request.downloadHandler.text);
 
-                // •Ô“š
+                // è¿”ç­”
                 Debug.Log($"resultResponse.choices[0].message : {resultResponse.choices[0].message.content}");
 
                 break;
