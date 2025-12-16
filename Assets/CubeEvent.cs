@@ -60,10 +60,13 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
     // 現在録音するマイクデバイス名
     string currentRecordingMicDeviceName = "null";
 
-    // PC の録音のターゲットになるマイクデバイス名
-    // これはお使いのデバイスで変わります
-    // 完全一致でないと受け取れないので注意
-    string recordingTargetMicDeviceName = "Krisp Microphone (Krisp Audio)";
+    // ========================================
+    // マイクデバイスの設定
+    // ========================================
+    // Unity を実行して Console でマイクデバイス一覧を確認し、
+    // 使いたいデバイスの [番号] を下記に設定してください
+    // ========================================
+    int recordingTargetMicDeviceID = 0;  // デフォルトは 0（最初のデバイス）
 
     // ヘッダーサイズ
     int HeaderByteSize = 44;
@@ -152,31 +155,29 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
 
     void Launch()
     {
+        // マイクデバイス一覧を表示
+        Debug.Log("========================================");
+        Debug.Log("マイクデバイス一覧");
+        Debug.Log("========================================");
 
-        // マイクデバイスを探す
-        foreach (string device in Microphone.devices)
+        for (int i = 0; i < Microphone.devices.Length; i++)
         {
-            Debug.Log($"Mic device name : {device}");
-
-            // PC 用のマイクデバイスを割り当て
-            if (device == recordingTargetMicDeviceName)
-            {
-                Debug.Log($"{recordingTargetMicDeviceName} searched");
-
-                currentRecordingMicDeviceName = device;
-
-                catchedMicDevice = true;
-            }
-
+            Debug.Log($"[{i}] {Microphone.devices[i]}");
         }
 
-        if (catchedMicDevice)
+        Debug.Log("========================================");
+
+        // ID でマイクデバイスを選択
+        if (recordingTargetMicDeviceID >= 0 && recordingTargetMicDeviceID < Microphone.devices.Length)
         {
+            currentRecordingMicDeviceName = Microphone.devices[recordingTargetMicDeviceID];
+            catchedMicDevice = true;
+            Debug.Log($"選択されたデバイス: [{recordingTargetMicDeviceID}] {currentRecordingMicDeviceName}");
             Debug.Log($"マイク捜索成功");
-            Debug.Log($"currentRecordingMicDeviceName : {currentRecordingMicDeviceName}");
         }
         else
         {
+            Debug.Log($"エラー: デバイスID {recordingTargetMicDeviceID} は範囲外です（0～{Microphone.devices.Length - 1} を指定してください）");
             Debug.Log($"マイク捜索失敗");
         }
 
