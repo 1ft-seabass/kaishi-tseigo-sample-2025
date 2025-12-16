@@ -384,7 +384,8 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
                 break;
         }
 
-
+        // メモリリーク防止のため、UnityWebRequest を破棄
+        request.Dispose();
     }
 
     // Chat API（OpenAI または Ollama）
@@ -470,6 +471,7 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
                 break;
         }
 
+        // メモリリーク防止のため、UnityWebRequest を破棄
         request.Dispose();
     }
 }
