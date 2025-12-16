@@ -7,8 +7,50 @@ using System;
 using System.IO;
 using System.Text;
 
+// ========================================
+// このスクリプトについて
+// ========================================
+// マイクで録音した音声を Whisper API で文字起こしし、
+// Chat API（OpenAI または Ollama）に送信して応答を得るスクリプトです。
+//
+// 【Cube の色の変化】
+// - 白：待機状態
+// - 赤：録音中
+// - 青：API応答待ち
+// - 白：応答受信後
+// ========================================
+
 public class CubeEvent : MonoBehaviour, IPointerClickHandler
 {
+    // ========================================
+    // Chat API 設定の切り替え方法
+    // ========================================
+    // 1. OpenAI を使う場合：
+    //    下の「OpenAI ChatGPT を使う場合」のブロックをそのままにする
+    //    「Ollama を使う場合」のブロックをコメントアウトしたままにする
+    //
+    // 2. Ollama を使う場合：
+    //    「OpenAI ChatGPT を使う場合」のブロックをコメントアウトする
+    //    「Ollama を使う場合」のブロックのコメントを外す
+    //    ※Ollama がローカルで起動している必要があります
+
+    // OpenAI ChatGPT を使う場合
+    string chatAPIType = "OpenAI";
+    string chatModel = "gpt-4o-mini";
+    string chatAPIURL = "https://api.openai.com/v1/chat/completions";
+    bool useAPIKey = true;
+
+    // Ollama を使う場合（ローカル）
+    // string chatAPIType = "Ollama";
+    // string chatModel = "granite3.2:2b";
+    // string chatAPIURL = "http://localhost:11434/v1/chat/completions";
+    // bool useAPIKey = false;
+
+    // ========================================
+
+    // Cube の Renderer（色変更用）
+    Renderer cubeRenderer;
+
     // マイクの開始・終了管理
     bool flagMicRecordStart = false;
 
@@ -102,6 +144,9 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
     {
         catchedMicDevice = false;
 
+        // Cube の Renderer を取得（色変更用）
+        cubeRenderer = GetComponent<Renderer>();
+
         Launch();
     }
 
@@ -141,6 +186,15 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
     {
 
     }
+
+    // Cube の色を変更する関数
+    void ChangeCubeColor(Color color)
+    {
+        if (cubeRenderer != null)
+        {
+            cubeRenderer.material.color = color;
+        }
+    }
     public void OnPointerClick(PointerEventData eventData)
     {
         if (catchedMicDevice)
@@ -170,6 +224,9 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
 
     void RecordStart()
     {
+        // Cube の色を赤に変更（録音中）
+        ChangeCubeColor(Color.red);
+
         // マイクの録音を開始して AudioClip を割り当て
         recordedAudioClip = Microphone.Start(currentRecordingMicDeviceName, false, maxTimeSeconds, samplingFrequency);
     }
@@ -252,6 +309,9 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
 
             Debug.Log($"dataWav.Length {dataWav.Length}");
 
+            // Cube の色を青に変更（API応答待ち）
+            ChangeCubeColor(Color.blue);
+
             // まず Wisper API で文字起こし
             StartCoroutine(PostWhisperAPI());
 
@@ -318,8 +378,8 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
 
                 WhisperAPIResponseData resultResponseWhisperAPI = JsonUtility.FromJson<WhisperAPIResponseData>(request.downloadHandler.text);
 
-                // テキストが起こせたら ChatGPT API に聞く
-                StartCoroutine(PostChatGPT(resultResponseWhisperAPI.text));
+                // テキストが起こせたら Chat API に聞く
+                StartCoroutine(PostChatAPI(resultResponseWhisperAPI.text));
 
                 break;
         }
@@ -327,17 +387,16 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
 
     }
 
-    // ChatGPT API
-    IEnumerator PostChatGPT(string text)
+    // Chat API（OpenAI または Ollama）
+    IEnumerator PostChatAPI(string text)
     {
         // HTTP リクエストする(POST メソッド) UnityWebRequest を呼び出し
-        // リクエスト仕様 : https://platform.openai.com/docs/guides/gpt/chat-completions-api
-        // API仕様 : https://platform.openai.com/docs/api-reference/completions/object
-        UnityWebRequest request = new UnityWebRequest("https://api.openai.com/v1/chat/completions", "POST");
+        // 設定された chatAPIURL を使用
+        UnityWebRequest request = new UnityWebRequest(chatAPIURL, "POST");
 
         RequestData requestData = new RequestData();
-        // データを設定
-        requestData.model = "gpt-4o-mini";
+        // データを設定（設定された chatModel を使用）
+        requestData.model = chatModel;
         RequestDataMessages currentMessage = new RequestDataMessages();
         // ロールは user
         currentMessage.role = "user";
@@ -362,33 +421,40 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
 
         // JSON で送ると HTTP ヘッダーで宣言する
         request.SetRequestHeader("Content-Type", "application/json");
-        // ChatGPT 用の認証を伝える設定
-        request.SetRequestHeader("Authorization", $"Bearer {OpenAIAPIKey}");
+        // API キーが必要な場合のみ認証ヘッダーを設定（OpenAI の場合）
+        if (useAPIKey)
+        {
+            request.SetRequestHeader("Authorization", $"Bearer {OpenAIAPIKey}");
+        }
 
         // リクエスト開始
         yield return request.SendWebRequest();
 
-        Debug.Log("ChatGPT リクエスト...");
+        Debug.Log($"{chatAPIType} Chat API リクエスト...");
 
         // 結果によって分岐
         switch (request.result)
         {
             case UnityWebRequest.Result.InProgress:
-                Debug.Log("ChatGPT リクエスト中");
+                Debug.Log($"{chatAPIType} Chat API リクエスト中");
                 break;
 
             case UnityWebRequest.Result.ProtocolError:
                 Debug.Log("ProtocolError");
                 Debug.Log(request.responseCode);
                 Debug.Log(request.error);
+                // エラー時は白に戻す
+                ChangeCubeColor(Color.white);
                 break;
 
             case UnityWebRequest.Result.ConnectionError:
                 Debug.Log("ConnectionError");
+                // エラー時は白に戻す
+                ChangeCubeColor(Color.white);
                 break;
 
             case UnityWebRequest.Result.Success:
-                Debug.Log("ChatGPT リクエスト成功");
+                Debug.Log($"{chatAPIType} Chat API リクエスト成功");
 
                 // コンソールに表示
                 Debug.Log($"responseData: {request.downloadHandler.text}");
@@ -397,6 +463,9 @@ public class CubeEvent : MonoBehaviour, IPointerClickHandler
 
                 // 返答
                 Debug.Log($"resultResponse.choices[0].message : {resultResponse.choices[0].message.content}");
+
+                // 応答受信後、Cube の色を白に戻す
+                ChangeCubeColor(Color.white);
 
                 break;
         }
